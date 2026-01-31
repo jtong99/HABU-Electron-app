@@ -1,8 +1,8 @@
-const { app, BrowserWindow, session, ipcMain, clipboard } = require('electron');
+const { app, BrowserWindow, session, ipcMain, clipboard, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
-const TARGET_URL = 'https://ai.studio/apps/drive/1yrj3srWeRSF6f9Wj1zsfRto_4osiHPXA?fullscreenApplet=true';
+const TARGET_URL = 'https://aistudio.google.com/apps/drive/1YVQ9iSXMXaLq5IDCIjLdSK5u0SBwqN7h?fullscreenApplet=true&showPreview=true&showAssistant=true&pli=1';
 
 // Clean Chrome User-Agent (no Electron or app name)
 const CHROME_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36';
@@ -83,6 +83,24 @@ function createWindow() {
         autoHideMenuBar: true,
     });
 
+    // Disable F1-F12 and Escape keys to prevent issues
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        const blockedKeys = ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'Escape'];
+        if (blockedKeys.includes(input.key)) {
+            event.preventDefault();
+        }
+    });
+
+    // Open external links in default browser
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        // Open external URLs in default browser
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            shell.openExternal(url);
+            return { action: 'deny' };
+        }
+        return { action: 'allow' };
+    });
+
     // Inject script to hide fullscreen button and add reload button (only for AI Studio)
     mainWindow.webContents.on('did-finish-load', () => {
         const currentURL = mainWindow.webContents.getURL();
@@ -117,15 +135,50 @@ function createWindow() {
                     });
                 }
 
-                // Create reload button
-                function createReloadButton() {
-                    if (document.getElementById('habu-reload-btn')) return;
+                // Auto-dismiss the "untrusted app" dialog
+                let dialogDismissed = false;
+                function dismissUntrustedDialog() {
+                    if (dialogDismissed) return;
+                    const dialog = document.getElementById('untrusted-dialog');
+                    if (dialog) {
+                        const continueBtn = dialog.querySelector('button[type="submit"], button.ms-button-primary');
+                        if (continueBtn) {
+                            continueBtn.click();
+                            dialogDismissed = true;
+                            console.log('Auto-dismissed untrusted app dialog');
+                        }
+                    }
+                }
+
+                // Watch for dialog to appear using MutationObserver
+                const dialogObserver = new MutationObserver((mutations) => {
+                    if (!dialogDismissed) {
+                        dismissUntrustedDialog();
+                    }
+                });
+                dialogObserver.observe(document.body || document.documentElement, {
+                    childList: true,
+                    subtree: true
+                });
+
+                // Also check periodically as backup
+                const dialogInterval = setInterval(() => {
+                    if (dialogDismissed) {
+                        clearInterval(dialogInterval);
+                        return;
+                    }
+                    dismissUntrustedDialog();
+                }, 200);
+
+                // Create switch account button (goes to cookies page)
+                function createSwitchAccountButton() {
+                    if (document.getElementById('habu-switch-btn')) return;
                     if (!document.body) return;
 
                     const btn = document.createElement('button');
-                    btn.id = 'habu-reload-btn';
-                    btn.textContent = '↻';
-                    btn.title = 'Reload App';
+                    btn.id = 'habu-switch-btn';
+                    btn.textContent = '🔄';
+                    btn.title = 'Đổi tài khoản';
                     btn.setAttribute('style', \`
                         position: fixed !important;
                         bottom: 20px !important;
@@ -133,42 +186,7 @@ function createWindow() {
                         width: 50px !important;
                         height: 50px !important;
                         border-radius: 50% !important;
-                        background: #4285f4 !important;
-                        color: white !important;
-                        border: none !important;
-                        font-size: 24px !important;
-                        cursor: pointer !important;
-                        z-index: 2147483647 !important;
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
-                        display: flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                    \`);
-                    btn.onclick = function() {
-                        window.location.href = TARGET_URL;
-                    };
-                    btn.onmouseover = function() { btn.style.background = '#3367d6'; };
-                    btn.onmouseout = function() { btn.style.background = '#4285f4'; };
-                    document.body.appendChild(btn);
-                }
-
-                // Create paste cookies button
-                function createImportButton() {
-                    if (document.getElementById('habu-import-btn')) return;
-                    if (!document.body) return;
-
-                    const btn = document.createElement('button');
-                    btn.id = 'habu-import-btn';
-                    btn.textContent = '📋';
-                    btn.title = 'Paste Cookies (copy from browser first)';
-                    btn.setAttribute('style', \`
-                        position: fixed !important;
-                        bottom: 140px !important;
-                        right: 20px !important;
-                        width: 50px !important;
-                        height: 50px !important;
-                        border-radius: 50% !important;
-                        background: #34a853 !important;
+                        background: #5f6368 !important;
                         color: white !important;
                         border: none !important;
                         font-size: 20px !important;
@@ -180,49 +198,12 @@ function createWindow() {
                         justify-content: center !important;
                     \`);
                     btn.onclick = async function() {
-                        if (window.habuAPI && window.habuAPI.pasteCookiesFromClipboard) {
-                            await window.habuAPI.pasteCookiesFromClipboard();
+                        if (window.habuAPI && window.habuAPI.goToWelcomePage) {
+                            await window.habuAPI.goToWelcomePage();
                         }
                     };
-                    btn.onmouseover = function() { btn.style.background = '#2d8e47'; };
-                    btn.onmouseout = function() { btn.style.background = '#34a853'; };
-                    document.body.appendChild(btn);
-                }
-
-                // Create logout/switch account button
-                function createLogoutButton() {
-                    if (document.getElementById('habu-logout-btn')) return;
-                    if (!document.body) return;
-
-                    const btn = document.createElement('button');
-                    btn.id = 'habu-logout-btn';
-                    btn.textContent = '⏻';
-                    btn.title = 'Switch Account (Clear Cache & Logout)';
-                    btn.setAttribute('style', \`
-                        position: fixed !important;
-                        bottom: 80px !important;
-                        right: 20px !important;
-                        width: 50px !important;
-                        height: 50px !important;
-                        border-radius: 50% !important;
-                        background: #ea4335 !important;
-                        color: white !important;
-                        border: none !important;
-                        font-size: 20px !important;
-                        cursor: pointer !important;
-                        z-index: 2147483647 !important;
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
-                        display: flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                    \`);
-                    btn.onclick = async function() {
-                        if (window.habuAPI && window.habuAPI.clearSessionAndReload) {
-                            await window.habuAPI.clearSessionAndReload();
-                        }
-                    };
-                    btn.onmouseover = function() { btn.style.background = '#c5221f'; };
-                    btn.onmouseout = function() { btn.style.background = '#ea4335'; };
+                    btn.onmouseover = function() { btn.style.background = '#4a4d50'; };
+                    btn.onmouseout = function() { btn.style.background = '#5f6368'; };
                     document.body.appendChild(btn);
                 }
 
@@ -238,22 +219,35 @@ function createWindow() {
                             display: none !important;
                             visibility: hidden !important;
                         }
+
+                        /* Hide the subheader bar */
+                        ms-console-subheader,
+                        ms-console-subheader.fullscreen-variant {
+                            display: none !important;
+                            visibility: hidden !important;
+                            height: 0 !important;
+                            overflow: hidden !important;
+                        }
+
+                        /* Hide the safety info warning */
+                        .safety-info-container {
+                            display: none !important;
+                            visibility: hidden !important;
+                            height: 0 !important;
+                            overflow: hidden !important;
+                        }
                     \`;
                     (document.head || document.documentElement).appendChild(style);
                 }
 
                 injectCSS();
                 hideFullscreenButton();
-                createReloadButton();
-                createLogoutButton();
-                createImportButton();
+                createSwitchAccountButton();
 
                 setInterval(() => {
                     injectCSS();
                     hideFullscreenButton();
-                    createReloadButton();
-                    createLogoutButton();
-                    createImportButton();
+                    createSwitchAccountButton();
                 }, 500);
 
                 const observer = new MutationObserver(() => {
@@ -338,6 +332,33 @@ ipcMain.handle('paste-cookies-from-clipboard', async (event) => {
             return { success: false, error: 'Not an array' };
         }
 
+        // Check if array is empty
+        if (cookies.length === 0) {
+            return { success: false, error: 'Empty array' };
+        }
+
+        // Validate cookie format - each cookie must have domain, name, value
+        const isValidFormat = cookies.every(cookie =>
+            cookie &&
+            typeof cookie === 'object' &&
+            typeof cookie.domain === 'string' &&
+            typeof cookie.name === 'string' &&
+            typeof cookie.value === 'string'
+        );
+
+        if (!isValidFormat) {
+            return { success: false, error: 'Invalid cookie format' };
+        }
+
+        // Check if cookies are from correct domain (google.com or aistudio.google.com)
+        const hasGoogleCookies = cookies.some(cookie =>
+            cookie.domain.includes('google.com')
+        );
+
+        if (!hasGoogleCookies) {
+            return { success: false, error: 'Wrong domain' };
+        }
+
         // Save to file for future use
         fs.writeFileSync(COOKIES_FILE, clipboardText, 'utf8');
         console.log(`Saved ${cookies.length} cookies to ${COOKIES_FILE}`);
@@ -374,6 +395,20 @@ ipcMain.handle('paste-cookies-from-clipboard', async (event) => {
         return { success: true, count: cookies.length };
     } catch (error) {
         console.error('Failed to paste cookies:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// IPC handler to go to welcome page (for switching account)
+ipcMain.handle('go-to-welcome-page', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    try {
+        if (win) {
+            win.loadFile(WELCOME_FILE);
+        }
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to go to welcome page:', error);
         return { success: false, error: error.message };
     }
 });
