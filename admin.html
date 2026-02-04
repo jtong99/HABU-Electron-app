@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HABU Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Login Page */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-box {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-title h1 {
+            font-size: 24px;
+            color: #1a1a2e;
+        }
+        .login-title p {
+            color: #888;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4285f4, #1967d2);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4);
+        }
+        .btn-danger {
+            background: #ea4335;
+            color: white;
+        }
+        .btn-success {
+            background: #34a853;
+            color: white;
+        }
+        .btn-secondary {
+            background: #5f6368;
+            color: white;
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+            width: auto;
+        }
+        .login-error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* Admin Dashboard */
+        .admin-container {
+            display: none;
+            min-height: 100vh;
+        }
+        .admin-header {
+            background: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .admin-header h1 {
+            font-size: 20px;
+            color: #1a1a2e;
+        }
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-user span {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Tabs */
+        .tabs {
+            background: #f5f5f5;
+            padding: 0 24px;
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 14px 24px;
+            background: transparent;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            color: #333;
+        }
+        .tab.active {
+            color: #4285f4;
+            border-bottom-color: #4285f4;
+            background: white;
+        }
+
+        /* Content */
+        .content {
+            padding: 24px;
+            background: #f5f5f5;
+            min-height: calc(100vh - 120px);
+        }
+        .panel {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .panel.active {
+            display: block;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Table */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 13px;
+            color: #666;
+        }
+        .table td {
+            font-size: 14px;
+        }
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .badge-danger {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            display: none;
+            animation: slideIn 0.3s ease;
+            z-index: 2000;
+        }
+        .toast.show {
+            display: block;
+        }
+        .toast-success {
+            background: #34a853;
+        }
+        .toast-error {
+            background: #ea4335;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Textarea */
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: monospace;
+            resize: vertical;
+            min-height: 200px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container">
+        <div class="login-box">
+            <div class="login-title">
+                <h1>HABU Admin</h1>
+                <p>Đăng nhập để quản lý hệ thống</p>
+            </div>
+            <div id="login-error" class="login-error"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Tên đăng nhập</label>
+                    <input type="text" id="username" required placeholder="Nhập username">
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="password" required placeholder="Nhập password">
+                </div>
+                <button type="submit" class="btn btn-primary">Đăng nhập</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-page" class="admin-container">
+        <header class="admin-header">
+            <h1>HABU Admin Panel</h1>
+            <div class="admin-user">
+                <span id="admin-username">Admin</span>
+                <button class="btn btn-secondary btn-sm" onclick="logout()">Đăng xuất</button>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="cookies">Cookies</button>
+            <button class="tab" data-tab="appconfig">App Config</button>
+            <button class="tab" data-tab="users">Admin Users</button>
+        </div>
+
+        <div class="content">
+            <!-- Cookies Panel -->
+            <div id="cookies-panel" class="panel active">
+                <div class="panel-header">
+                    <h2 class="panel-title">Quản lý Cookies</h2>
+                    <button class="btn btn-primary btn-sm" onclick="showAddCookiesModal()">+ Thêm Cookies</button>
+                </div>
+                <div id="cookies-loading" class="loading">Đang tải...</div>
+                <table class="table" id="cookies-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên</th>
+                            <th>Số lượng</th>
+                            <th>Hạn sử dụng</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cookies-body"></tbody>
+                </table>
+            </div>
+
+            <!-- App Config Panel -->
+            <div id="appconfig-panel" class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Quản lý App Config</h2>
+                    <button class="btn btn-primary btn-sm" onclick="showAddConfigModal()">+ Thêm Config</button>
+                </div>
+                <div id="config-loading" class="loading">Đang tải...</div>
+                <table class="table" id="config-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên App</th>
+                            <th>URL</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="config-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Users Panel -->
+            <div id="users-panel" class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Quản lý Admin Users</h2>
+                    <button class="btn btn-primary btn-sm" onclick="showAddUserModal()">+ Thêm User</button>
+                </div>
+                <div id="users-loading" class="loading">Đang tải...</div>
+                <table class="table" id="users-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Cookies Modal -->
+    <div id="cookies-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Thêm Cookies</h3>
+                <button class="modal-close" onclick="closeModal('cookies-modal')">&times;</button>
+            </div>
+            <form id="cookies-form">
+                <div class="form-group">
+                    <label>Tên (tùy chọn)</label>
+                    <input type="text" id="cookies-name" placeholder="VD: Account chính">
+                </div>
+                <div class="form-group">
+                    <label>Cookies Data (JSON)</label>
+                    <textarea id="cookies-data" placeholder="Paste cookies JSON từ EditThisCookie..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('cookies-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Config Modal -->
+    <div id="config-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Thêm App Config</h3>
+                <button class="modal-close" onclick="closeModal('config-modal')">&times;</button>
+            </div>
+            <form id="config-form">
+                <div class="form-group">
+                    <label>Tên App</label>
+                    <input type="text" id="config-name" placeholder="VD: HABU AI GEN PREMIUM" required>
+                </div>
+                <div class="form-group">
+                    <label>App URL</label>
+                    <input type="url" id="config-url" placeholder="https://aistudio.google.com/..." required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="config-active" checked> Kích hoạt
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('config-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Thêm Admin User</h3>
+                <button class="modal-close" onclick="closeModal('user-modal')">&times;</button>
+            </div>
+            <form id="user-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="user-username" required placeholder="Nhập username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="user-password" required placeholder="Nhập password">
+                </div>
+                <div class="form-group">
+                    <label>Email (tùy chọn)</label>
+                    <input type="email" id="user-email" placeholder="admin@example.com">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('user-modal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let currentUser = null;
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-panel').classList.add('active');
+            });
+        });
+
+        // Login form
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('login-error');
+
+            errorEl.style.display = 'none';
+
+            if (window.adminAPI) {
+                const result = await window.adminAPI.verifyAdmin(username, password);
+                if (result.success && result.user) {
+                    currentUser = result.user;
+                    document.getElementById('admin-username').textContent = currentUser.username;
+                    document.getElementById('login-page').style.display = 'none';
+                    document.getElementById('admin-page').style.display = 'block';
+                    loadAllData();
+                } else {
+                    errorEl.textContent = 'Sai tên đăng nhập hoặc mật khẩu!';
+                    errorEl.style.display = 'block';
+                }
+            }
+        });
+
+        // Logout
+        function logout() {
+            currentUser = null;
+            document.getElementById('admin-page').style.display = 'none';
+            document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Load all data
+        async function loadAllData() {
+            loadCookies();
+            loadConfigs();
+            loadUsers();
+        }
+
+        // Load cookies
+        async function loadCookies() {
+            document.getElementById('cookies-loading').style.display = 'block';
+            document.getElementById('cookies-table').style.display = 'none';
+
+            const result = await window.adminAPI.getAllCookies();
+            const tbody = document.getElementById('cookies-body');
+            tbody.innerHTML = '';
+
+            if (result.data && result.data.length > 0) {
+                for (const item of result.data) {
+                    const cookiesCount = Array.isArray(item.cookies_data) ? item.cookies_data.length : 0;
+                    const expResult = await window.adminAPI.formatExpiration(item.expires_at);
+                    const exp = expResult || { text: 'Không xác định', color: '#888' };
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.name || '-'}</td>
+                            <td>${cookiesCount}</td>
+                            <td style="color:${exp.color};font-weight:500;">${exp.text}</td>
+                            <td>${new Date(item.created_at).toLocaleString()}</td>
+                            <td class="actions">
+                                <button class="btn btn-danger btn-sm" onclick="deleteCookies(${item.id})">Xóa</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Chưa có dữ liệu</td></tr>';
+            }
+
+            document.getElementById('cookies-loading').style.display = 'none';
+            document.getElementById('cookies-table').style.display = 'table';
+        }
+
+        // Load configs
+        async function loadConfigs() {
+            document.getElementById('config-loading').style.display = 'block';
+            document.getElementById('config-table').style.display = 'none';
+
+            const result = await window.adminAPI.getAllAppConfigs();
+            const tbody = document.getElementById('config-body');
+            tbody.innerHTML = '';
+
+            if (result.data && result.data.length > 0) {
+                result.data.forEach(item => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.app_name || '-'}</td>
+                            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${item.app_url}</td>
+                            <td><span class="badge ${item.is_active ? 'badge-success' : 'badge-danger'}">${item.is_active ? 'Hoạt động' : 'Tắt'}</span></td>
+                            <td>${new Date(item.created_at).toLocaleString()}</td>
+                            <td class="actions">
+                                <button class="btn btn-danger btn-sm" onclick="deleteConfig(${item.id})">Xóa</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Chưa có dữ liệu</td></tr>';
+            }
+
+            document.getElementById('config-loading').style.display = 'none';
+            document.getElementById('config-table').style.display = 'table';
+        }
+
+        // Load users
+        async function loadUsers() {
+            document.getElementById('users-loading').style.display = 'block';
+            document.getElementById('users-table').style.display = 'none';
+
+            const result = await window.adminAPI.getAllSuperusers();
+            const tbody = document.getElementById('users-body');
+            tbody.innerHTML = '';
+
+            if (result.data && result.data.length > 0) {
+                result.data.forEach(item => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.username}</td>
+                            <td>${item.email || '-'}</td>
+                            <td><span class="badge ${item.is_active ? 'badge-success' : 'badge-danger'}">${item.is_active ? 'Hoạt động' : 'Tắt'}</span></td>
+                            <td>${new Date(item.created_at).toLocaleString()}</td>
+                            <td class="actions">
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser(${item.id})">Xóa</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Chưa có dữ liệu</td></tr>';
+            }
+
+            document.getElementById('users-loading').style.display = 'none';
+            document.getElementById('users-table').style.display = 'table';
+        }
+
+        // Modal functions
+        function showAddCookiesModal() {
+            document.getElementById('cookies-form').reset();
+            document.getElementById('cookies-modal').classList.add('show');
+        }
+
+        function showAddConfigModal() {
+            document.getElementById('config-form').reset();
+            document.getElementById('config-modal').classList.add('show');
+        }
+
+        function showAddUserModal() {
+            document.getElementById('user-form').reset();
+            document.getElementById('user-modal').classList.add('show');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        // Form submissions
+        document.getElementById('cookies-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('cookies-name').value;
+            const data = document.getElementById('cookies-data').value;
+
+            try {
+                const cookies = JSON.parse(data);
+                const result = await window.adminAPI.saveCookies(cookies, name);
+                if (result.success) {
+                    showToast('Đã lưu cookies thành công!', 'success');
+                    closeModal('cookies-modal');
+                    loadCookies();
+                } else {
+                    showToast('Lỗi khi lưu cookies!', 'error');
+                }
+            } catch (err) {
+                showToast('Dữ liệu JSON không hợp lệ!', 'error');
+            }
+        });
+
+        document.getElementById('config-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const configData = {
+                app_name: document.getElementById('config-name').value,
+                app_url: document.getElementById('config-url').value,
+                is_active: document.getElementById('config-active').checked
+            };
+
+            const result = await window.adminAPI.saveAppConfig(configData);
+            if (result.success) {
+                showToast('Đã lưu config thành công!', 'success');
+                closeModal('config-modal');
+                loadConfigs();
+            } else {
+                showToast('Lỗi khi lưu config!', 'error');
+            }
+        });
+
+        document.getElementById('user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userData = {
+                username: document.getElementById('user-username').value,
+                password: document.getElementById('user-password').value,
+                email: document.getElementById('user-email').value
+            };
+
+            const result = await window.adminAPI.createSuperuser(userData);
+            if (result.success) {
+                showToast('Đã tạo user thành công!', 'success');
+                closeModal('user-modal');
+                loadUsers();
+            } else {
+                showToast('Lỗi khi tạo user!', 'error');
+            }
+        });
+
+        // Delete functions
+        async function deleteCookies(id) {
+            if (confirm('Bạn có chắc muốn xóa cookies này?')) {
+                const result = await window.adminAPI.deleteCookies(id);
+                if (result.success) {
+                    showToast('Đã xóa cookies!', 'success');
+                    loadCookies();
+                } else {
+                    showToast('Lỗi khi xóa!', 'error');
+                }
+            }
+        }
+
+        async function deleteConfig(id) {
+            if (confirm('Bạn có chắc muốn xóa config này?')) {
+                const result = await window.adminAPI.deleteAppConfig(id);
+                if (result.success) {
+                    showToast('Đã xóa config!', 'success');
+                    loadConfigs();
+                } else {
+                    showToast('Lỗi khi xóa!', 'error');
+                }
+            }
+        }
+
+        async function deleteUser(id) {
+            if (confirm('Bạn có chắc muốn xóa user này?')) {
+                const result = await window.adminAPI.deleteSuperuser(id);
+                if (result.success) {
+                    showToast('Đã xóa user!', 'success');
+                    loadUsers();
+                } else {
+                    showToast('Lỗi khi xóa!', 'error');
+                }
+            }
+        }
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast show toast-${type}`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

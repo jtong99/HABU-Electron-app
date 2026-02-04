@@ -10,6 +10,7 @@ const CHROME_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Apple
 // Path to cookies file (place exported cookies here)
 const COOKIES_FILE = path.join(__dirname, 'cookies.json');
 const WELCOME_FILE = path.join(__dirname, 'welcome.html');
+const ADMIN_FILE = path.join(__dirname, 'admin.html');
 
 // Check if cookies file exists and has content
 function hasSavedCookies() {
@@ -387,9 +388,21 @@ ipcMain.handle('paste-cookies-from-clipboard', async (event) => {
 
         console.log('Cookies imported from clipboard successfully!');
 
-        // Navigate to AI Studio
+        // Get active app URL from Supabase, fallback to hardcoded URL
+        let appUrl = TARGET_URL;
+        try {
+            const supabaseClient = require('./supabase-client');
+            const appConfig = await supabaseClient.fetchAppConfig();
+            if (appConfig && appConfig.app_url) {
+                appUrl = appConfig.app_url;
+            }
+        } catch (err) {
+            console.log('Failed to fetch app config, using default URL');
+        }
+
+        // Navigate to the app
         if (win) {
-            win.loadURL(TARGET_URL);
+            win.loadURL(appUrl);
         }
 
         return { success: true, count: cookies.length };
@@ -409,6 +422,218 @@ ipcMain.handle('go-to-welcome-page', async (event) => {
         return { success: true };
     } catch (error) {
         console.error('Failed to go to welcome page:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// IPC handler to open admin page
+ipcMain.handle('go-to-admin-page', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    try {
+        if (win) {
+            win.loadFile(ADMIN_FILE);
+        }
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to go to admin page:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// IPC handler to get active app config from Supabase
+ipcMain.handle('get-active-app-config', async () => {
+    try {
+        const supabaseClient = require('./supabase-client');
+        const config = await supabaseClient.fetchAppConfig();
+        return { success: !!config, config };
+    } catch (error) {
+        console.error('Failed to get active app config:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// IPC handler to use cookies from Supabase directly (random pick)
+ipcMain.handle('use-supabase-cookies', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    try {
+        const supabaseClient = require('./supabase-client');
+
+        // Get all cookies from Supabase
+        const allCookies = await supabaseClient.getAllCookies();
+        if (!allCookies || allCookies.length === 0) {
+            return { success: false, error: 'No cookies in database' };
+        }
+
+        // Randomly pick one cookies record
+        const randomIndex = Math.floor(Math.random() * allCookies.length);
+        const selectedCookieRecord = allCookies[randomIndex];
+
+        let cookies = selectedCookieRecord.cookies_data;
+        if (typeof cookies === 'string') {
+            cookies = JSON.parse(cookies);
+        }
+
+        if (!Array.isArray(cookies) || cookies.length === 0) {
+            return { success: false, error: 'Invalid cookies data' };
+        }
+
+        // Import the cookies to session
+        for (const cookie of cookies) {
+            try {
+                const electronCookie = {
+                    url: `https://${cookie.domain.startsWith('.') ? cookie.domain.slice(1) : cookie.domain}${cookie.path || '/'}`,
+                    name: cookie.name,
+                    value: cookie.value,
+                    domain: cookie.domain,
+                    path: cookie.path || '/',
+                    secure: cookie.secure || false,
+                    httpOnly: cookie.httpOnly || false,
+                    sameSite: cookie.sameSite || 'no_restriction'
+                };
+                if (cookie.expirationDate) {
+                    electronCookie.expirationDate = cookie.expirationDate;
+                }
+                await session.defaultSession.cookies.set(electronCookie);
+            } catch (err) {
+                console.log(`Failed to set cookie ${cookie.name}: ${err.message}`);
+            }
+        }
+
+        console.log(`Imported cookies from Supabase (record ${selectedCookieRecord.id})`);
+
+        // Get active app URL from Supabase
+        const appConfig = await supabaseClient.fetchAppConfig();
+        if (!appConfig || !appConfig.app_url) {
+            return { success: false, error: 'No active app URL configured' };
+        }
+
+        // Navigate to the app
+        if (win) {
+            win.loadURL(appConfig.app_url);
+        }
+
+        return { success: true, cookiesUsed: selectedCookieRecord.id };
+    } catch (error) {
+        console.error('Failed to use Supabase cookies:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// ==================== ADMIN IPC HANDLERS ====================
+const supabaseClient = require('./supabase-client');
+
+// Admin Auth
+ipcMain.handle('admin-verify', async (event, username, password) => {
+    try {
+        const user = await supabaseClient.verifyAdmin(username, password);
+        return { success: !!user, user };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+// Cookies handlers
+ipcMain.handle('admin-get-all-cookies', async () => {
+    try {
+        const data = await supabaseClient.getAllCookies();
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('admin-save-cookies', async (event, cookies, name) => {
+    try {
+        const result = await supabaseClient.saveCookies(cookies, name);
+        return { success: result };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('admin-delete-cookies', async (event, id) => {
+    try {
+        const result = await supabaseClient.deleteCookies(id);
+        return { success: result };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('admin-format-expiration', async (event, expiresAt) => {
+    return supabaseClient.formatExpiration(expiresAt);
+});
+
+// App Config handlers
+ipcMain.handle('admin-get-all-configs', async () => {
+    try {
+        const data = await supabaseClient.getAllAppConfigs();
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('admin-save-config', async (event, configData) => {
+    try {
+        const result = await supabaseClient.saveAppConfig(configData);
+        return { success: result };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('admin-update-config', async (event, id, configData) => {
+    try {
+        const result = await supabaseClient.updateAppConfig(id, configData);
+        return { success: result };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('admin-delete-config', async (event, id) => {
+    try {
+        const result = await supabaseClient.deleteAppConfig(id);
+        return { success: result };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+// Superusers handlers
+ipcMain.handle('admin-get-all-users', async () => {
+    try {
+        const data = await supabaseClient.getAllSuperusers();
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('admin-create-user', async (event, userData) => {
+    try {
+        const result = await supabaseClient.createSuperuser(userData);
+        return { success: result };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('admin-update-user', async (event, id, userData) => {
+    try {
+        const result = await supabaseClient.updateSuperuser(id, userData);
+        return { success: result };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('admin-delete-user', async (event, id) => {
+    try {
+        const result = await supabaseClient.deleteSuperuser(id);
+        return { success: result };
+    } catch (error) {
         return { success: false, error: error.message };
     }
 });

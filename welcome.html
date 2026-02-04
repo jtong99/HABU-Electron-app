@@ -23,13 +23,13 @@
             background: white;
             border-radius: 20px;
             padding: 32px;
-            max-width: 480px;
+            max-width: 500px;
             width: 100%;
             box-shadow: 0 25px 80px rgba(0,0,0,0.4);
         }
         .logo-section {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
         .logo {
             width: 64px;
@@ -48,12 +48,108 @@
             font-size: 12px;
         }
 
+        /* Options Section */
+        .options-section {
+            margin-bottom: 20px;
+        }
+        .option-title {
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .options {
+            display: flex;
+            gap: 12px;
+        }
+        .option-btn {
+            flex: 1;
+            padding: 16px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .option-btn:hover {
+            border-color: #4285f4;
+            background: #f8f9ff;
+        }
+        .option-btn.active {
+            border-color: #4285f4;
+            background: #e8f0fe;
+        }
+        .option-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .option-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .option-desc {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* Direct Use Section */
+        .direct-section {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        .direct-section.show {
+            display: block;
+        }
+        .direct-btn {
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #4285f4, #1967d2);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+        }
+        .direct-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+        }
+        .direct-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .direct-hint {
+            color: #1565c0;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+
+        /* Paste Section */
+        .paste-section {
+            display: none;
+        }
+        .paste-section.show {
+            display: block;
+        }
+
         /* Steps */
         .steps-section {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         .steps-title {
             color: #333;
@@ -254,10 +350,6 @@
             50% { transform: scale(1.2); }
             100% { transform: scale(1); }
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
 
         /* Footer */
         .footer {
@@ -267,6 +359,25 @@
         .footer-text {
             color: #999;
             font-size: 11px;
+        }
+
+        /* Admin Button */
+        .admin-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.6);
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .admin-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.9);
         }
     </style>
 </head>
@@ -278,35 +389,20 @@
             <p class="subtitle">Ứng dụng tạo ảnh AI chuyên nghiệp</p>
         </div>
 
-        <div class="steps-section">
-            <div class="steps-title">Hướng dẫn kết nối (chỉ cần làm 1 lần):</div>
-
-            <div class="step">
-                <div class="step-number">1</div>
-                <div class="step-content">
-                    Cài extension <a href="https://chromewebstore.google.com/detail/editthiscookie-v3/ojfebgpkimhlhcblbalbfjblapadhbol" target="_blank" class="step-link">EditThisCookie</a> trên Chrome
-                </div>
-            </div>
-
-            <div class="step">
-                <div class="step-number">2</div>
-                <div class="step-content">
-                    Mở <a href="https://aistudio.google.com" target="_blank" class="step-link">aistudio.google.com</a> và đăng nhập tài khoản Google
-                </div>
-            </div>
-
-            <div class="step">
-                <div class="step-number">3</div>
-                <div class="step-content">
-                    Nhấn icon <span class="highlight">EditThisCookie</span> trên thanh công cụ (góc phải trên)
-                </div>
-            </div>
-
-            <div class="step">
-                <div class="step-number">4</div>
-                <div class="step-content">
-                    Nhấn nút <span class="highlight">Export</span> (mũi tên lên) để sao chép cookies
-                </div>
+        <!-- Options -->
+        <div class="options-section">
+            <div class="option-title">Chọn cách truy cập:</div>
+            <div class="options">
+                <button class="option-btn active" onclick="selectOption('direct')" id="opt-direct">
+                    <div class="option-icon">🚀</div>
+                    <div class="option-label">Truy cập nhanh</div>
+                    <div class="option-desc">Tự động kết nối</div>
+                </button>
+                <button class="option-btn" onclick="selectOption('paste')" id="opt-paste">
+                    <div class="option-icon">📋</div>
+                    <div class="option-label">Dùng Cookies</div>
+                    <div class="option-desc">Tự paste cookies</div>
+                </button>
             </div>
         </div>
 
@@ -331,12 +427,55 @@
             <div class="loading-hint">Vui lòng chờ trong giây lát</div>
         </div>
 
-        <div id="final-step" class="final-step">
-            <div class="final-step-title">Bước cuối: Nhấn nút bên dưới</div>
-            <button id="paste-btn" class="paste-btn" onclick="pasteCookies()">
-                Dán Cookies và Truy cập
+        <!-- Direct Use Section -->
+        <div id="direct-section" class="direct-section show">
+            <button id="direct-btn" class="direct-btn" onclick="useDirectAccess()">
+                Truy cập ngay
             </button>
-            <div class="final-hint">Ứng dụng sẽ tự động đọc dữ liệu từ bộ nhớ</div>
+            <div class="direct-hint">Sử dụng cookies có sẵn trong hệ thống</div>
+        </div>
+
+        <!-- Paste Cookies Section -->
+        <div id="paste-section" class="paste-section">
+            <div class="steps-section">
+                <div class="steps-title">Hướng dẫn kết nối (chỉ cần làm 1 lần):</div>
+
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        Cài extension <a href="https://chromewebstore.google.com/detail/editthiscookie-v3/ojfebgpkimhlhcblbalbfjblapadhbol" target="_blank" class="step-link">EditThisCookie</a> trên Chrome
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        Mở <a href="https://aistudio.google.com" target="_blank" class="step-link">aistudio.google.com</a> và đăng nhập tài khoản Google
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        Nhấn icon <span class="highlight">EditThisCookie</span> trên thanh công cụ (góc phải trên)
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        Nhấn nút <span class="highlight">Export</span> (mũi tên lên) để sao chép cookies
+                    </div>
+                </div>
+            </div>
+
+            <div id="final-step" class="final-step">
+                <div class="final-step-title">Bước cuối: Nhấn nút bên dưới</div>
+                <button id="paste-btn" class="paste-btn" onclick="pasteCookies()">
+                    Dán Cookies và Truy cập
+                </button>
+                <div class="final-hint">Ứng dụng sẽ tự động đọc dữ liệu từ bộ nhớ</div>
+            </div>
         </div>
 
         <div class="footer">
@@ -344,9 +483,86 @@
         </div>
     </div>
 
+    <!-- Admin Button -->
+    <button class="admin-btn" onclick="goToAdmin()">Admin</button>
+
     <script>
         let isProcessing = false;
+        let currentOption = 'direct';
 
+        // Select option
+        function selectOption(option) {
+            currentOption = option;
+
+            // Update buttons
+            document.getElementById('opt-direct').classList.toggle('active', option === 'direct');
+            document.getElementById('opt-paste').classList.toggle('active', option === 'paste');
+
+            // Show/hide sections
+            document.getElementById('direct-section').classList.toggle('show', option === 'direct');
+            document.getElementById('paste-section').classList.toggle('show', option === 'paste');
+
+            // Hide messages
+            document.getElementById('error').classList.remove('show');
+            document.getElementById('success').classList.remove('show');
+        }
+
+        // Go to admin page
+        async function goToAdmin() {
+            if (window.habuAPI && window.habuAPI.goToAdminPage) {
+                await window.habuAPI.goToAdminPage();
+            }
+        }
+
+        // Direct access using Supabase cookies
+        async function useDirectAccess() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const errorEl = document.getElementById('error');
+            const successEl = document.getElementById('success');
+            const loadingEl = document.getElementById('loading');
+            const directSection = document.getElementById('direct-section');
+            const directBtn = document.getElementById('direct-btn');
+
+            // Hide messages
+            errorEl.classList.remove('show', 'shake');
+            successEl.classList.remove('show');
+
+            // Show loading
+            loadingEl.classList.add('show');
+            directSection.classList.remove('show');
+            directBtn.disabled = true;
+
+            if (window.habuAPI && window.habuAPI.useSupabaseCookies) {
+                const result = await window.habuAPI.useSupabaseCookies();
+
+                loadingEl.classList.remove('show');
+
+                if (result.success) {
+                    successEl.classList.add('show');
+                } else {
+                    directSection.classList.add('show');
+                    directBtn.disabled = false;
+
+                    const { title, text } = getDirectErrorMessage(result.error);
+                    document.getElementById('error-title').textContent = title;
+                    document.getElementById('error-text').textContent = text;
+
+                    errorEl.classList.add('show');
+                    setTimeout(() => errorEl.classList.add('shake'), 10);
+
+                    isProcessing = false;
+                }
+            } else {
+                loadingEl.classList.remove('show');
+                directSection.classList.add('show');
+                directBtn.disabled = false;
+                isProcessing = false;
+            }
+        }
+
+        // Paste cookies
         async function pasteCookies() {
             if (isProcessing) return;
             isProcessing = true;
@@ -379,7 +595,7 @@
                     finalStepEl.style.display = 'block';
                     pasteBtn.disabled = false;
 
-                    const { title, text } = getErrorMessage(result.error);
+                    const { title, text } = getPasteErrorMessage(result.error);
                     document.getElementById('error-title').textContent = title;
                     document.getElementById('error-text').textContent = text;
 
@@ -399,7 +615,32 @@
             }
         }
 
-        function getErrorMessage(error) {
+        function getDirectErrorMessage(error) {
+            switch(error) {
+                case 'No cookies in database':
+                    return {
+                        title: 'Chưa có cookies trong hệ thống!',
+                        text: 'Vui lòng liên hệ admin hoặc sử dụng cách "Dùng Cookies" để tự kết nối.'
+                    };
+                case 'Invalid cookies data':
+                    return {
+                        title: 'Dữ liệu cookies không hợp lệ!',
+                        text: 'Vui lòng liên hệ admin để kiểm tra cookies trong hệ thống.'
+                    };
+                case 'No active app URL configured':
+                    return {
+                        title: 'Chưa cấu hình App URL!',
+                        text: 'Vui lòng liên hệ admin để cấu hình đường dẫn ứng dụng.'
+                    };
+                default:
+                    return {
+                        title: 'Có lỗi xảy ra!',
+                        text: 'Vui lòng thử lại hoặc sử dụng cách "Dùng Cookies".'
+                    };
+            }
+        }
+
+        function getPasteErrorMessage(error) {
             switch(error) {
                 case 'Clipboard empty':
                     return {
